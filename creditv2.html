@@ -1,0 +1,1455 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes" />
+  <title>Gestion des Crédits</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f1217;
+      --card: rgba(255, 255, 255, 0.04);
+      --accent: #3b82f6;
+      --accent-dark: #1d4ed8;
+      --success: #16a34a;
+      --danger: #ef4444;
+      --muted: rgba(255, 255, 255, 0.6);
+    }
+
+    /* Mode clair */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f5f7;
+        --card: rgba(255, 255, 255, 0.8);
+        --accent: #007AFF;
+        --accent-dark: #0056CC;
+        --success: #28A745;
+        --danger: #DC3545;
+        --muted: rgba(0, 0, 0, 0.6);
+      }
+      body {
+        background: var(--bg);
+        color: #000;
+      }
+      .module {
+        background: var(--card);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      input, select, textarea {
+        background: rgba(255, 255, 255, 0.7);
+        color: #000;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #000;
+      }
+      .muted {
+        color: var(--muted);
+      }
+    }
+
+    * { 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      padding: 0;
+      overflow-x: hidden;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      padding: 15px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .bubble-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+    .bubble {
+      position: absolute; bottom: -120px; border-radius: 50%;
+      background: rgba(255,255,255,0.04); filter: blur(8px);
+      animation: rise linear infinite; animation-fill-mode: both;
+    }
+    @keyframes rise {
+      0% { transform: translateY(0) scale(0.9); opacity: 0; }
+      8% { opacity: 0.28; }
+      90% { opacity: 0.18; }
+      100% { transform: translateY(-140vh) scale(1.15); opacity: 0; }
+    }
+    .container { 
+      max-width: 1400px; 
+      margin: 0 auto;
+      min-height: 100vh;
+    }
+    header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 15px; 
+      gap: 10px; 
+      flex-wrap: wrap;
+    }
+    header h1 { 
+      margin: 0; 
+      font-size: 18px; 
+      font-weight: 700;
+    }
+    .modules { 
+      display: grid; 
+      grid-template-columns: 1fr; 
+      gap: 20px; 
+    }
+    @media (min-width: 768px) { 
+      .modules { 
+        grid-template-columns: 1fr 1fr; 
+      } 
+    }
+    .module { 
+      background: var(--card); 
+      padding: 15px; 
+      border-radius: 16px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h2 { 
+      margin: 0 0 12px; 
+      font-size: 16px; 
+      font-weight: 700; 
+    }
+    label { 
+      display: block; 
+      font-size: 12px; 
+      margin-top: 10px; 
+      opacity: 0.95; 
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%; 
+      padding: 12px; 
+      margin-top: 4px;
+      border-radius: 12px; 
+      border: none;
+      background: rgba(255,255,255,0.08); 
+      color: #fff; 
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      background: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+    }
+    .row { 
+      display: flex; 
+      gap: 8px; 
+      flex-wrap: wrap; 
+    }
+    .col { 
+      flex: 1; 
+      min-width: 120px; 
+    }
+    button {
+      padding: 12px 16px; 
+      border-radius: 12px; 
+      border: none;
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    .btn-primary { 
+      background: var(--accent); 
+      color: white; 
+    }
+    .btn-primary:active {
+      background: var(--accent-dark);
+    }
+    .btn-ghost { 
+      background: transparent; 
+      border: 1px solid rgba(255,255,255,0.15); 
+      color: #fff; 
+    }
+    .btn-ghost:active {
+      background: rgba(255,255,255,0.1);
+    }
+    .btn-danger { 
+      background: var(--danger); 
+      color: white; 
+    }
+    .signature-canvas {
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
+      margin-top: 6px;
+      background: rgba(255,255,255,0.05);
+      touch-action: none;
+      width: 100%;
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 10px; 
+      font-size: 12px; 
+    }
+    th, td {
+      padding: 10px 8px; 
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    th { 
+      color: #bbb; 
+      font-size: 11px; 
+      font-weight: 600; 
+    }
+    .status {
+      padding: 6px 8px; 
+      border-radius: 8px; 
+      font-size: 10px;
+      font-weight: 700; 
+      display: inline-block;
+    }
+    .status.ok { background: rgba(22,163,74,0.15); color: var(--success); }
+    .status.late { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .status.partial { background: rgba(251,191,36,0.15); color: #d97706; }
+    .status.paid { background: rgba(255,255,255,0.06); color: #fff; }
+    .modal {
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8);
+      display: none; 
+      z-index: 1000; 
+      align-items: center; 
+      justify-content: center;
+      padding: 10px;
+    }
+    .modal.show { 
+      display: flex; 
+    }
+    .modal-content {
+      background: #1a1f29; 
+      width: 100%; 
+      max-width: 800px; 
+      border-radius: 20px;
+      padding: 20px; 
+      max-height: 90vh; 
+      overflow: auto;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .modal-header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 15px; 
+      flex-wrap: wrap; 
+      gap: 10px;
+    }
+    .contract { 
+      background: white; 
+      color: #000; 
+      padding: 20px; 
+      border-radius: 16px; 
+      font-size: 16px; 
+      line-height: 1.6; 
+    }
+    .contract h3 { 
+      margin-top: 0; 
+      color: #1a365d; 
+      font-size: 20px; 
+    }
+    .signature-box { 
+      margin-top: 20px; 
+      display: flex; 
+      justify-content: space-between; 
+      flex-wrap: wrap; 
+      gap: 15px; 
+    }
+    .signature-box div { 
+      width: 100%; 
+      min-width: 150px; 
+      text-align: center; 
+    }
+    @media (min-width: 480px) { 
+      .signature-box div { 
+        width: 45%; 
+      } 
+    }
+    .signature-img { 
+      height: 60px; 
+      border-top: 1px solid #333; 
+      padding-top: 8px; 
+    }
+    .muted { 
+      color: var(--muted); 
+      font-size: 12px; 
+    }
+    .pay-modal { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8); 
+      z-index: 1001; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 10px; 
+    }
+    .pay-modal.show { 
+      display: flex; 
+    }
+    .pay-content { 
+      background: var(--card); 
+      padding: 20px; 
+      border-radius: 20px; 
+      width: 100%; 
+      max-width: 400px; 
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo-preview { 
+      max-width: 150px; 
+      max-height: 80px; 
+      margin: 8px 0; 
+      border-radius: 12px; 
+    }
+    .contract-page { 
+      page-break-after: always; 
+      padding: 20px; 
+    }
+    .contract-page:last-child { 
+      page-break-after: avoid; 
+    }
+    
+    /* Styles pour mobile */
+    @media (max-width: 480px) {
+      body { 
+        padding: 12px; 
+        font-size: 15px;
+      }
+      .module { 
+        padding: 12px; 
+      }
+      header { 
+        flex-direction: column; 
+        align-items: flex-start; 
+      }
+      header h1 { 
+        font-size: 17px; 
+      }
+      .row { 
+        flex-direction: column; 
+      }
+      .col { 
+        min-width: auto; 
+      }
+      button { 
+        width: 100%; 
+        margin-bottom: 5px; 
+        padding: 14px;
+      }
+      .signature-canvas { 
+        height: 100px !important; 
+      }
+      table { 
+        font-size: 13px; 
+      }
+      th, td { 
+        padding: 8px 6px; 
+      }
+      input, select, textarea {
+        padding: 14px;
+        font-size: 16px;
+      }
+    }
+
+    /* Styles pour la signature en plein écran */
+    .signature-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.95);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .signature-modal.show { 
+      display: flex; 
+    }
+    .signature-container {
+      background: white;
+      border-radius: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    .signature-fullscreen {
+      width: 100%;
+      height: 200px;
+      border: 2px solid #333;
+      border-radius: 12px;
+      background: white;
+      margin: 15px 0;
+      touch-action: none;
+    }
+
+    /* Sélecteur de thème */
+    .theme-selector {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+    .theme-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    .theme-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Correction du défilement */
+    .scroll-fix {
+      -webkit-overflow-scrolling: touch;
+      overflow-anchor: none;
+    }
+  </style>
+</head>
+<body class="scroll-fix">
+  <div class="bubble-bg" aria-hidden="true">
+    <div class="bubble" style="left:5%; width:140px; height:140px; animation-duration:28s;"></div>
+    <div class="bubble" style="left:22%; width:100px; height:100px; animation-duration:24s; animation-delay:2s;"></div>
+    <div class="bubble" style="left:40%; width:160px; height:160px; animation-duration:30s; animation-delay:1s;"></div>
+    <div class="bubble" style="left:62%; width:120px; height:120px; animation-duration:26s; animation-delay:3s;"></div>
+    <div class="bubble" style="left:82%; width:90px; height:90px; animation-duration:20s; animation-delay:.5s;"></div>
+  </div>
+
+  <!-- Sélecteur de thème -->
+  <div class="theme-selector">
+    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+  </div>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>Gestion des Crédits</h1>
+        <p class="muted">Prêteur : <strong id="adminName">Vladimir Romero Figueroa Ernesto</strong></p>
+      </div>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <button class="btn-ghost" onclick="openSettings()">⚙️ Paramètres</button>
+        <button class="btn-ghost" onclick="setupMySignature()">🎨 Signature</button>
+      </div>
+    </header>
+
+    <div class="modules">
+      <!-- MODULE 1 : CRÉER -->
+      <div class="module">
+        <h2>📝 Nouveau Crédit</h2>
+        <form id="creditForm">
+          <label>Prénom *</label>
+          <input id="prenom" required>
+          <label>Nom *</label>
+          <input id="nom" required>
+          <label>Téléphone (optionnel)</label>
+          <input id="telephone" type="tel" inputmode="tel">
+          <label>Lieu de signature *</label>
+          <input id="lieuSignature" required placeholder="Ville, Pays">
+          
+          <div class="row">
+            <div class="col">
+              <label>Montant emprunté (€) *</label>
+              <input id="montant" type="number" step="0.01" min="0.01" required onchange="calculateMonthlyPayment()" inputmode="decimal">
+            </div>
+            <div class="col">
+              <label>Intérêt</label>
+              <div style="display:flex; gap:4px;">
+                <select id="typeInteret" style="width:40%; padding:12px; border-radius:10px;" onchange="calculateMonthlyPayment()">
+                  <option value="%">%</option>
+                  <option value="€">€</option>
+                </select>
+                <input id="interet" type="number" step="0.01" min="0" placeholder="0" onchange="calculateMonthlyPayment()" inputmode="decimal">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>Durée du prêt (mois) *</label>
+              <input id="dureeMois" type="number" min="1" required placeholder="Ex: 12" onchange="calculateMonthlyPayment(); calculateDueDate();" inputmode="numeric">
+            </div>
+            <div class="col">
+              <label>Montant mensuel (€) *</label>
+              <input id="montantMensuel" type="number" step="0.01" min="0.01" required placeholder="Ex: 833.33" inputmode="decimal">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <label>Date de mise à disposition *</label>
+              <input id="dateVersement" type="date" required onchange="calculateDueDate()">
+            </div>
+            <div class="col">
+              <label>Date limite *</label>
+              <input id="dateLimite" type="date" required>
+            </div>
+          </div>
+          <label>Note (optionnel)</label>
+          <textarea id="note" rows="2"></textarea>
+          <label>Signature du débiteur *</label>
+          <div style="position: relative;">
+            <canvas id="debiteurCanvas" class="signature-canvas" width="400" height="100"></canvas>
+            <button type="button" class="btn-ghost" onclick="openFullscreenSignature('debiteurCanvas')" style="position: absolute; top: 5px; right: 5px; padding: 6px 10px; font-size: 12px; background: rgba(0,0,0,0.7);">📱 Plein écran</button>
+          </div>
+          <div style="display:flex; gap:6px; margin-top:6px; align-items: center;">
+            <button type="button" class="btn-ghost" onclick="clearCanvas('debiteurCanvas')">🗑️ Effacer</button>
+            <span class="muted" id="sigStatus">Non signé</span>
+          </div>
+          <div style="margin-top:12px; display:flex; gap:6px; flex-wrap: wrap;">
+            <button type="submit" class="btn-primary">✅ Enregistrer</button>
+            <button type="button" class="btn-ghost" onclick="resetForm()">🔄 Réinitialiser</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MODULE 2 : REGISTRE -->
+      <div class="module">
+        <h2>📋 Registre des Crédits</h2>
+        <div style="overflow:auto; max-height:50vh; margin-top:10px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Montant</th>
+                <th>Reste</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="creditsTable"></tbody>
+          </table>
+        </div>
+        <p id="empty" class="muted" style="display:none;">Aucun crédit.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONTRAT -->
+  <div id="contractModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📄 Contrat de Prêt</h2>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <button class="btn-ghost" onclick="generatePDF()">📄 PDF</button>
+          <button class="btn-ghost" onclick="printContract()">🖨️ Imprimer</button>
+          <button class="btn-ghost" onclick="closeContract()">Fermer</button>
+        </div>
+      </div>
+      <div id="contractContent" class="contract"></div>
+    </div>
+  </div>
+
+  <!-- MODAL PAYER -->
+  <div id="payModal" class="pay-modal">
+    <div class="pay-content">
+      <h3>💰 Enregistrer un paiement</h3>
+      <p id="payInfo"></p>
+      <label>Montant reçu (€) *</label>
+      <input id="amountReceived" type="number" step="0.01" min="0.01" placeholder="Ex: 10" inputmode="decimal">
+
+      <div style="margin-top:10px;">
+        <label>
+          <input type="checkbox" id="addInterest"> Ajouter un intérêt (optionnel)
+        </label>
+        <div id="interestFields" style="display:none; margin-top:6px; display:flex; gap:6px;">
+          <select id="interestType" style="width:35%; padding:10px; border-radius:8px;">
+            <option value="%">%</option>
+            <option value="€">€</option>
+          </select>
+          <input id="interestValue" type="number" step="0.01" min="0" placeholder="Valeur" inputmode="decimal">
+        </div>
+      </div>
+
+      <div style="margin-top:15px; display:flex; gap:6px; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="confirmPartialPayment()">✅ Enregistrer</button>
+        <button class="btn-ghost" onclick="closePayModal()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL SIGNATURE PLEIN ÉCRAN -->
+  <div id="fullscreenSigModal" class="signature-modal">
+    <div class="signature-container">
+      <h3>Signature - Plein écran</h3>
+      <p>Signez avec votre doigt ou stylet</p>
+      <canvas id="fullscreenCanvas" class="signature-fullscreen"></canvas>
+      <div style="margin-top:15px; display:flex; gap:8px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-ghost" onclick="clearFullscreenCanvas()">🗑️ Effacer</button>
+        <button class="btn-primary" onclick="saveFullscreenSignature()">✅ Valider</button>
+        <button class="btn-ghost" onclick="closeFullscreenSignature()">❌ Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CACHÉ : CANVAS POUR TA SIGNATURE -->
+  <div id="mySigModal" class="modal">
+    <div class="modal-content">
+      <h3>Signature du prêteur</h3>
+      <p>Dessinez une fois. Utilisée dans tous les contrats.</p>
+      <canvas id="myCanvas" width="400" height="100" style="border:1px solid #555; border-radius:12px; background:#00000010;"></canvas>
+      <div style="margin-top:8px; display:flex; gap:6px;">
+        <button class="btn-ghost" onclick="clearCanvas('myCanvas')">🗑️ Effacer</button>
+        <button class="btn-primary" onclick="saveMySignature()">✅ Sauvegarder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PARAMÈTRES -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Paramètres</h2>
+        <button class="btn-ghost" onclick="closeSettings()">Fermer</button>
+      </div>
+      
+      <div style="margin-bottom: 15px;">
+        <h3>Logo de l'entreprise</h3>
+        <p class="muted">Le logo apparaîtra sur les contrats imprimés</p>
+        
+        <div id="logoPreviewContainer" style="margin: 10px 0;">
+          <img id="logoPreview" class="logo-preview" src="" alt="Aperçu du logo" style="display: none;">
+        </div>
+        
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <input type="file" id="logoUpload" accept="image/*" style="display: none;">
+          <button type="button" class="btn-primary" onclick="document.getElementById('logoUpload').click()">
+            📁 Choisir un logo
+          </button>
+          <button type="button" class="btn-ghost" onclick="removeLogo()" id="removeLogoBtn" style="display: none;">
+            🗑️ Supprimer
+          </button>
+        </div>
+        
+        <p class="muted" style="margin-top: 6px; font-size: 11px;">
+          Formats acceptés : JPG, PNG, SVG (max 2MB)
+        </p>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <h3>Informations du prêteur</h3>
+        <label>Nom complet *</label>
+        <input type="text" id="lenderName" value="Vladimir Romero Figueroa Ernesto" style="margin-bottom: 8px;">
+        
+        <label>Adresse</label>
+        <textarea id="lenderAddress" rows="2" placeholder="Adresse complète..."></textarea>
+        
+        <label>Téléphone</label>
+        <input type="tel" id="lenderPhone" placeholder="Numéro de téléphone..." inputmode="tel">
+      </div>
+
+      <div style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="saveSettings()">✅ Sauvegarder</button>
+        <button class="btn-ghost" onclick="closeSettings()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const DONATEUR = "Vladimir Romero Figueroa Ernesto";
+    function uid() { return 'id-' + Math.random().toString(36).slice(2, 10); }
+    function todayISO() { return new Date().toISOString().slice(0, 10); }
+    function round2(x) { return Math.round((Number(x) + Number.EPSILON) * 100) / 100; }
+    function escapeHtml(s) { return s ? String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', "'": '&#39;' }[c])) : ''; }
+    function formatEuro(x) { return Number(x || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }); }
+
+    const KEY_CREDITS = 'credits_v7';
+    const KEY_MY_SIG = 'mySignatureData';
+    const KEY_SETTINGS = 'appSettings';
+    const KEY_THEME = 'appTheme';
+    
+    let debiteurSigned = false;
+    let mySigData = localStorage.getItem(KEY_MY_SIG);
+    let currentPayId = null;
+    let currentContractId = null;
+    let currentSignatureCanvas = null;
+    let appSettings = JSON.parse(localStorage.getItem(KEY_SETTINGS)) || {};
+
+    // Gestion du thème
+    function toggleTheme() {
+      const currentTheme = localStorage.getItem(KEY_THEME) || 'auto';
+      let newTheme;
+      
+      if (currentTheme === 'auto') {
+        newTheme = 'dark';
+      } else if (currentTheme === 'dark') {
+        newTheme = 'light';
+      } else {
+        newTheme = 'auto';
+      }
+      
+      localStorage.setItem(KEY_THEME, newTheme);
+      applyTheme(newTheme);
+      alert(`Thème ${newTheme === 'auto' ? 'automatique' : newTheme === 'dark' ? 'sombre' : 'clair'} activé`);
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.style.setProperty('--bg', '#0f1217');
+        document.documentElement.style.setProperty('--card', 'rgba(255, 255, 255, 0.04)');
+        document.documentElement.style.setProperty('--muted', 'rgba(255, 255, 255, 0.6)');
+      } else if (theme === 'light') {
+        document.documentElement.style.setProperty('--bg', '#f5f5f7');
+        document.documentElement.style.setProperty('--card', 'rgba(255, 255, 255, 0.8)');
+        document.documentElement.style.setProperty('--muted', 'rgba(0, 0, 0, 0.6)');
+      }
+    }
+
+    // Appliquer le thème au chargement
+    const savedTheme = localStorage.getItem(KEY_THEME) || 'auto';
+    if (savedTheme !== 'auto') {
+      applyTheme(savedTheme);
+    }
+
+    function loadCredits() { 
+      try { 
+        return JSON.parse(localStorage.getItem(KEY_CREDITS)) || []; 
+      } catch (e) { 
+        return []; 
+      } 
+    }
+    
+    function saveCredits(arr) { 
+      localStorage.setItem(KEY_CREDITS, JSON.stringify(arr)); 
+      renderTable(); 
+    }
+
+    // --- CANVAS AMÉLIORÉ ---
+    function initCanvas(id) {
+      const canvas = document.getElementById(id);
+      const ctx = canvas.getContext('2d');
+      
+      // Redimensionner le canvas pour l'affichage
+      const displayWidth = canvas.offsetWidth;
+      const displayHeight = canvas.offsetHeight;
+      
+      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+      }
+      
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#000';
+      return { canvas, ctx };
+    }
+
+    function setupDrawing(id) {
+      const { canvas, ctx } = initCanvas(id);
+      let isDown = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        let clientX, clientY;
+        
+        if (e.type.includes('touch')) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+          e.preventDefault();
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      };
+
+      const start = (e) => { 
+        isDown = true; 
+        const pos = getPos(e);
+        lastX = pos.x;
+        lastY = pos.y;
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+        
+        if (id === 'debiteurCanvas') {
+          debiteurSigned = true;
+          document.getElementById('sigStatus').textContent = 'Signé';
+        }
+      };
+      
+      const draw = (e) => { 
+        if (!isDown) return;
+        const pos = getPos(e);
+        
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        
+        lastX = pos.x;
+        lastY = pos.y;
+      };
+      
+      const stop = () => {
+        isDown = false;
+        ctx.beginPath();
+      };
+
+      // Réinitialiser les événements
+      canvas.removeEventListener('mousedown', start);
+      canvas.removeEventListener('mousemove', draw);
+      canvas.removeEventListener('mouseup', stop);
+      canvas.removeEventListener('mouseout', stop);
+      canvas.removeEventListener('touchstart', start);
+      canvas.removeEventListener('touchmove', draw);
+      canvas.removeEventListener('touchend', stop);
+      canvas.removeEventListener('touchcancel', stop);
+
+      // Appliquer les événements
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stop);
+      canvas.addEventListener('mouseout', stop);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      canvas.addEventListener('touchend', stop, { passive: false });
+      canvas.addEventListener('touchcancel', stop, { passive: false });
+    }
+
+    // --- SIGNATURE PLEIN ÉCRAN ---
+    function openFullscreenSignature(canvasId) {
+      currentSignatureCanvas = canvasId;
+      const originalCanvas = document.getElementById(canvasId);
+      const fullscreenCanvas = document.getElementById('fullscreenCanvas');
+      
+      // Redimensionner le canvas plein écran
+      fullscreenCanvas.width = fullscreenCanvas.offsetWidth;
+      fullscreenCanvas.height = fullscreenCanvas.offsetHeight;
+      
+      const ctx = fullscreenCanvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Copier le contenu existant si disponible
+      if (originalCanvas.width > 0) {
+        ctx.drawImage(originalCanvas, 0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+      }
+      
+      setupFullscreenDrawing();
+      document.getElementById('fullscreenSigModal').classList.add('show');
+    }
+
+    function setupFullscreenDrawing() {
+      const canvas = document.getElementById('fullscreenCanvas');
+      const ctx = canvas.getContext('2d');
+      let isDown = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        let clientX, clientY;
+        
+        if (e.type.includes('touch')) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+          e.preventDefault();
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+        
+        return {
+          x: clientX - rect.left,
+          y: clientY - rect.top
+        };
+      };
+
+      const start = (e) => { 
+        isDown = true; 
+        const pos = getPos(e);
+        lastX = pos.x;
+        lastY = pos.y;
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
+      };
+      
+      const draw = (e) => { 
+        if (!isDown) return;
+        const pos = getPos(e);
+        
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        
+        lastX = pos.x;
+        lastY = pos.y;
+      };
+      
+      const stop = () => {
+        isDown = false;
+        ctx.beginPath();
+      };
+
+      // Réinitialiser et réappliquer les événements
+      canvas.removeEventListener('mousedown', start);
+      canvas.removeEventListener('mousemove', draw);
+      canvas.removeEventListener('mouseup', stop);
+      canvas.removeEventListener('mouseout', stop);
+      canvas.removeEventListener('touchstart', start);
+      canvas.removeEventListener('touchmove', draw);
+      canvas.removeEventListener('touchend', stop);
+      canvas.removeEventListener('touchcancel', stop);
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stop);
+      canvas.addEventListener('mouseout', stop);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', draw, { passive: false });
+      canvas.addEventListener('touchend', stop, { passive: false });
+      canvas.addEventListener('touchcancel', stop, { passive: false });
+    }
+
+    function clearFullscreenCanvas() {
+      const canvas = document.getElementById('fullscreenCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 4;
+    }
+
+    function saveFullscreenSignature() {
+      const fullscreenCanvas = document.getElementById('fullscreenCanvas');
+      const originalCanvas = document.getElementById(currentSignatureCanvas);
+      const originalCtx = originalCanvas.getContext('2d');
+      
+      // Redimensionner et copier la signature
+      originalCanvas.width = originalCanvas.offsetWidth;
+      originalCanvas.height = originalCanvas.offsetHeight;
+      
+      originalCtx.drawImage(fullscreenCanvas, 0, 0, originalCanvas.width, originalCanvas.height);
+      
+      if (currentSignatureCanvas === 'debiteurCanvas') {
+        debiteurSigned = true;
+        document.getElementById('sigStatus').textContent = 'Signé';
+      }
+      
+      closeFullscreenSignature();
+    }
+
+    function closeFullscreenSignature() {
+      document.getElementById('fullscreenSigModal').classList.remove('show');
+    }
+
+    function clearCanvas(id) {
+      const { canvas, ctx } = initCanvas(id);
+      if (id === 'debiteurCanvas') {
+        debiteurSigned = false;
+        document.getElementById('sigStatus').textContent = 'Non signé';
+      }
+    }
+
+    function saveMySignature() {
+      mySigData = document.getElementById('myCanvas').toDataURL();
+      localStorage.setItem(KEY_MY_SIG, mySigData);
+      document.getElementById('mySigModal').classList.remove('show');
+      alert('Signature sauvegardée.');
+    }
+
+    // --- PARAMÈTRES ---
+    function openSettings() {
+      document.getElementById('lenderName').value = appSettings.lenderName || DONATEUR;
+      document.getElementById('lenderAddress').value = appSettings.lenderAddress || '';
+      document.getElementById('lenderPhone').value = appSettings.lenderPhone || '';
+      
+      if (appSettings.logoData) {
+        document.getElementById('logoPreview').src = appSettings.logoData;
+        document.getElementById('logoPreview').style.display = 'block';
+        document.getElementById('removeLogoBtn').style.display = 'block';
+      } else {
+        document.getElementById('logoPreview').style.display = 'none';
+        document.getElementById('removeLogoBtn').style.display = 'none';
+      }
+      
+      document.getElementById('settingsModal').classList.add('show');
+    }
+
+    function closeSettings() {
+      document.getElementById('settingsModal').classList.remove('show');
+    }
+
+    function saveSettings() {
+      const lenderName = document.getElementById('lenderName').value.trim();
+      if (!lenderName) {
+        alert('Le nom du prêteur est requis.');
+        return;
+      }
+      
+      appSettings = {
+        ...appSettings,
+        lenderName: lenderName,
+        lenderAddress: document.getElementById('lenderAddress').value.trim(),
+        lenderPhone: document.getElementById('lenderPhone').value.trim()
+      };
+      
+      localStorage.setItem(KEY_SETTINGS, JSON.stringify(appSettings));
+      document.getElementById('adminName').textContent = lenderName;
+      closeSettings();
+      alert('Paramètres sauvegardés.');
+    }
+
+    // Gestion du logo
+    document.getElementById('logoUpload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        alert('Veuillez sélectionner un fichier image.');
+        return;
+      }
+      
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Le fichier est trop volumineux (max 2MB).');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        appSettings.logoData = e.target.result;
+        document.getElementById('logoPreview').src = e.target.result;
+        document.getElementById('logoPreview').style.display = 'block';
+        document.getElementById('removeLogoBtn').style.display = 'block';
+        localStorage.setItem(KEY_SETTINGS, JSON.stringify(appSettings));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function removeLogo() {
+      delete appSettings.logoData;
+      document.getElementById('logoPreview').style.display = 'none';
+      document.getElementById('removeLogoBtn').style.display = 'none';
+      document.getElementById('logoUpload').value = '';
+      localStorage.setItem(KEY_SETTINGS, JSON.stringify(appSettings));
+    }
+
+    // --- CALCULS AUTOMATIQUES ---
+    function calculateMonthlyPayment() {
+      const montant = parseFloat(document.getElementById('montant').value) || 0;
+      const typeInteret = document.getElementById('typeInteret').value;
+      const interet = parseFloat(document.getElementById('interet').value) || 0;
+      const dureeMois = parseInt(document.getElementById('dureeMois').value) || 1;
+
+      if (montant > 0 && dureeMois > 0) {
+        let totalAmount = montant;
+        
+        if (typeInteret === '%' && interet > 0) {
+          totalAmount = round2(montant * (1 + interet / 100));
+        } else if (typeInteret === '€' && interet > 0) {
+          totalAmount = round2(montant + interet);
+        }
+        
+        const montantMensuel = round2(totalAmount / dureeMois);
+        document.getElementById('montantMensuel').value = montantMensuel.toFixed(2);
+      }
+    }
+
+    function calculateDueDate() {
+      const dateVersement = document.getElementById('dateVersement').value;
+      const dureeMois = parseInt(document.getElementById('dureeMois').value) || 1;
+      
+      if (dateVersement && dureeMois > 0) {
+        const date = new Date(dateVersement);
+        date.setMonth(date.getMonth() + dureeMois);
+        document.getElementById('dateLimite').value = date.toISOString().slice(0, 10);
+      }
+    }
+
+    // --- CALCUL INITIAL ---
+    function calcInitialTotal(credit) {
+      return credit.typeInteret === '%' 
+        ? round2(credit.montant * (1 + (credit.interet || 0) / 100))
+        : round2(credit.montant + (credit.interet || 0));
+    }
+
+    function getRemaining(credit) {
+      const initial = calcInitialTotal(credit);
+      const totalPaid = (credit.payments || []).reduce((sum, p) => sum + p.amount, 0);
+      return round2(Math.max(0, initial - totalPaid));
+    }
+
+    // --- FORM ---
+    let editingId = null;
+    document.getElementById('creditForm').addEventListener('submit', e => {
+      e.preventDefault();
+      if (!debiteurSigned) return alert('Veuillez signer le contrat du débiteur.');
+      const prenom = document.getElementById('prenom').value.trim();
+      const nom = document.getElementById('nom').value.trim();
+      const montant = document.getElementById('montant').value;
+      const dateLimite = document.getElementById('dateLimite').value;
+      const dateVersement = document.getElementById('dateVersement').value;
+      const dureeMois = document.getElementById('dureeMois').value;
+      const montantMensuel = document.getElementById('montantMensuel').value;
+      const lieuSignature = document.getElementById('lieuSignature').value.trim();
+
+      if (!prenom || !nom || !montant || !dateLimite || !dateVersement || !dureeMois || !montantMensuel || !lieuSignature) {
+        return alert('Tous les champs marqués * sont requis.');
+      }
+
+      const credit = {
+        id: editingId || uid(),
+        prenom, nom,
+        telephone: document.getElementById('telephone').value.trim(),
+        montant: Number(montant),
+        typeInteret: document.getElementById('typeInteret').value,
+        interet: Number(document.getElementById('interet').value) || 0,
+        datePret: todayISO(),
+        dateLimite,
+        dateVersement,
+        dureeMois: Number(dureeMois),
+        montantMensuel: Number(montantMensuel),
+        lieuSignature,
+        note: document.getElementById('note').value.trim(),
+        debiteurSignature: document.getElementById('debiteurCanvas').toDataURL(),
+        payments: [],
+        createdAt: editingId ? loadCredits().find(c => c.id === editingId)?.createdAt : new Date().toISOString()
+      };
+
+      const credits = loadCredits();
+      if (editingId) {
+        const idx = credits.findIndex(c => c.id === editingId);
+        if (idx !== -1) credits[idx] = credit;
+      } else {
+        credits.push(credit);
+      }
+      saveCredits(credits);
+      resetForm();
+      alert(editingId ? 'Mis à jour.' : 'Crédit enregistré.');
+    });
+
+    function resetForm() {
+      editingId = null;
+      document.getElementById('creditForm').reset();
+      clearCanvas('debiteurCanvas');
+      document.getElementById('dateVersement').value = todayISO();
+      document.getElementById('dateLimite').value = '';
+      document.getElementById('montantMensuel').value = '';
+    }
+
+    // --- TABLEAU ---
+    function renderTable() {
+      const tbody = document.getElementById('creditsTable');
+      const credits = loadCredits();
+      tbody.innerHTML = '';
+      document.getElementById('empty').style.display = credits.length ? 'none' : 'block';
+
+      credits.forEach(c => {
+        const initial = calcInitialTotal(c);
+        const remaining = getRemaining(c);
+        let status = 'ok', text = 'EN COURS';
+        if (remaining <= 0) { status = 'paid'; text = 'REMBOURSÉ'; }
+        else if (c.payments && c.payments.length > 0) { status = 'partial'; text = `PARTIEL (${formatEuro(remaining)} restant)`; }
+        else if (new Date() > new Date(c.dateLimite)) { status = 'late'; text = 'EN RETARD'; }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(c.prenom)}</strong> ${escapeHtml(c.nom)}<div class="muted" style="font-size:11px;">${c.telephone || ''}</div></td>
+          <td>${formatEuro(c.montant)}</td>
+          <td>${formatEuro(remaining)}</td>
+          <td><span class="status ${status}">${text}</span></td>
+          <td>
+            <button class="btn-ghost" onclick="viewContract('${c.id}')">👁️ Voir</button>
+            <button class="btn-ghost" onclick="openPayModal('${c.id}')">💰 Payer</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- CONTRAT ---
+    function viewContract(id) {
+      currentContractId = id;
+      const credit = loadCredits().find(c => c.id === id);
+      if (!credit) return;
+      const initial = calcInitialTotal(credit);
+      const remaining = getRemaining(credit);
+
+      const firstPaymentDate = new Date(credit.dateVersement);
+      firstPaymentDate.setMonth(firstPaymentDate.getMonth() + 1);
+      const firstPaymentStr = firstPaymentDate.toISOString().split('T')[0];
+
+      const lenderName = appSettings.lenderName || DONATEUR;
+
+      const content = `
+        <!-- PAGE 1 -->
+        <div class="contract-page">
+          ${appSettings.logoData ? `<div style="text-align: center; margin-bottom: 15px;"><img src="${appSettings.logoData}" style="max-width: 180px; max-height: 70px;"></div>` : ''}
+          <h3 style="color: #1a365d; margin-top: 0; text-align: center; font-size: 22px;">CONTRAT DE PRÊT ENTRE PARTICULIERS</h3>
+          
+          <div style="margin: 20px 0;">
+            <p style="font-size: 16px; margin: 12px 0;"><strong>Prêteur :</strong> ${lenderName}</p>
+            ${appSettings.lenderAddress ? `<p style="font-size: 16px; margin: 12px 0;"><strong>Adresse du prêteur :</strong> ${escapeHtml(appSettings.lenderAddress)}</p>` : ''}
+            ${appSettings.lenderPhone ? `<p style="font-size: 16px; margin: 12px 0;"><strong>Téléphone du prêteur :</strong> ${escapeHtml(appSettings.lenderPhone)}</p>` : ''}
+            <p style="font-size: 16px; margin: 12px 0;"><strong>Emprunteur :</strong> ${escapeHtml(credit.prenom)} ${escapeHtml(credit.nom)}</p>
+            <p style="font-size: 16px; margin: 12px 0;"><strong>Téléphone emprunteur :</strong> ${credit.telephone || 'Non renseigné'}</p>
+          </div>
+
+          <div style="margin: 20px 0;">
+            <h4 style="color: #1a365d; font-size: 18px;">INFORMATIONS DU PRÊT</h4>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Montant du prêt :</strong> ${formatEuro(credit.montant)}</p>
+            ${credit.interet > 0 ? `<p style="font-size: 15px; margin: 10px 0;"><strong>Intérêt :</strong> ${credit.interet} ${credit.typeInteret}</p>` : ''}
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Montant total à rembourser :</strong> ${formatEuro(initial)}</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Durée du prêt :</strong> ${credit.dureeMois} mois</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Mensualité :</strong> ${formatEuro(credit.montantMensuel)}</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Date de versement :</strong> ${credit.dateVersement}</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Date limite de remboursement :</strong> ${credit.dateLimite}</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Premier paiement :</strong> ${firstPaymentStr}</p>
+            <p style="font-size: 15px; margin: 10px 0;"><strong>Lieu de signature :</strong> ${escapeHtml(credit.lieuSignature)}</p>
+          </div>
+        </div>
+
+        <!-- PAGE 2 -->
+        <div class="contract-page">
+          <h4 style="color: #1a365d; font-size: 18px; margin-top: 0;">CONDITIONS GÉNÉRALES</h4>
+          <p style="font-size: 14px; margin: 8px 0;">1. L'emprunteur s'engage à rembourser le prêt selon l'échéancier convenu.</p>
+          <p style="font-size: 14px; margin: 8px 0;">2. Tout retard de paiement supérieur à 15 jours pourra entraîner des pénalités.</p>
+          <p style="font-size: 14px; margin: 8px 0;">3. Le prêteur certifie que les fonds proviennent de ressources légales.</p>
+          <p style="font-size: 14px; margin: 8px 0;">4. Les deux parties s'engagent à la confidentialité des informations.</p>
+
+          <h4 style="color: #1a365d; font-size: 18px; margin-top: 25px;">ÉCHÉANCIER DE REMBOURSEMENT</h4>
+          <p style="font-size: 15px; margin: 12px 0;">
+            L'emprunteur s'engage à effectuer <strong>${credit.dureeMois} paiements mensuels</strong> 
+            de <strong>${formatEuro(credit.montantMensuel)}</strong> chacun, le premier versement 
+            étant dû le <strong>${firstPaymentStr}</strong>.
+          </p>
+
+          <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 15px 0;">
+            <p style="font-size: 15px; margin: 6px 0;"><strong>Total à rembourser :</strong> ${formatEuro(initial)}</p>
+            <p style="font-size: 15px; margin: 6px 0;"><strong>Mensualité :</strong> ${formatEuro(credit.montantMensuel)}</p>
+            <p style="font-size: 15px; margin: 6px 0;"><strong>Nombre de mensualités :</strong> ${credit.dureeMois}</p>
+            <p style="font-size: 15px; margin: 6px 0;"><strong>Date finale :</strong> ${credit.dateLimite}</p>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 40px; gap: 15px; flex-wrap: wrap;">
+            <div style="width: 100%; min-width: 150px; text-align: center;">
+              <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">LE PRÊTEUR</div>
+              <div style="margin: 12px 0; height: 70px; display: flex; align-items: center; justify-content: center; border-top: 2px solid #333; padding-top: 10px;">
+                ${mySigData ? `<img src="${mySigData}" height="50">` : '<div style="font-size: 13px; color: #666;">Signature manquante</div>'}
+              </div>
+              <div style="font-size: 15px; font-weight: bold;">${lenderName}</div>
+              ${appSettings.lenderAddress ? `<div style="font-size: 13px; color: #555;">${escapeHtml(appSettings.lenderAddress)}</div>` : ''}
+            </div>
+            <div style="width: 100%; min-width: 150px; text-align: center;">
+              <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">L'EMPRUNTEUR</div>
+              <div style="margin: 12px 0; height: 70px; display: flex; align-items: center; justify-content: center; border-top: 2px solid #333; padding-top: 10px;">
+                ${credit.debiteurSignature && credit.debiteurSignature !== 'data:,' ? `<img src="${credit.debiteurSignature}" height="50">` : '<div style="font-size: 13px; color: #666;">Signature manquante</div>'}
+              </div>
+              <div style="font-size: 15px; font-weight: bold;">${escapeHtml(credit.prenom)} ${escapeHtml(credit.nom)}</div>
+              ${credit.telephone ? `<div style="font-size: 13px; color: #555;">${escapeHtml(credit.telephone)}</div>` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+      document.getElementById('contractContent').innerHTML = content;
+      document.getElementById('contractModal').classList.add('show');
+    }
+
+    function closeContract() {
+      document.getElementById('contractModal').classList.remove('show');
+    }
+
+    function printContract() {
+      const credit = loadCredits().find(c => c.id === currentContractId);
+      if (!credit) return;
+      
+      const printWin = window.open('', '_blank');
+      printWin.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Contrat de Prêt - ${escapeHtml(credit.prenom)} ${escapeHtml(credit.nom)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; color: #000; padding: 15px; font-size: 16px; line-height: 1.4; }
+            .contract-page { page-break-after: always; padding: 20px; }
+            .contract-page:last-child { page-break-after: avoid; }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              .contract-page { padding: 15px; }
+            }
+          </style>
+        </head>
+        <body>
+          ${document.getElementById('contractContent').innerHTML}
+        </body>
+        </html>
+      `);
+      printWin.document.close();
+      printWin.focus();
+      printWin.print();
+    }
+
+    // --- GÉNÉRATION PDF ---
+    function generatePDF() {
+      const credit = loadCredits().find(c => c.id === currentContractId);
+      if (!credit) return;
+      
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+      
+      // Nom du fichier en minuscules
+      const fileName = `credit_${credit.prenom.toLowerCase()}_${credit.nom.toLowerCase()}_${dateStr}_${timeStr}.pdf`;
+      
+      const element = document.getElementById('contractContent');
+      const opt = {
+        margin: 10,
+        filename: fileName,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2, 
+          useCORS: true,
+          logging: false,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait',
+          compress: true
+        }
+      };
+      
+      html2pdf().set(opt).from(element).save();
+    }
+
+    // --- PAYER ---
+    function openPayModal(id) {
+      currentPayId = id;
+      const credit = loadCredits().find(c => c.id === id);
+      const remaining = getRemaining(credit);
+      document.getElementById('payInfo').innerText = `Reste à payer : ${formatEuro(remaining)}`;
+      document.getElementById('amountReceived').value = '';
+      document.getElementById('addInterest').checked = false;
+      document.getElementById('interestFields').style.display = 'none';
+      document.getElementById('payModal').classList.add('show');
+    }
+
+    document.getElementById('addInterest').addEventListener('change', e => {
+      document.getElementById('interestFields').style.display = e.target.checked ? 'flex' : 'none';
+    });
+
+    function confirmPartialPayment() {
+      const amount = Number(document.getElementById('amountReceived').value);
+      if (!amount || amount <= 0) return alert('Montant invalide.');
+
+      const credits = loadCredits();
+      const credit = credits.find(c => c.id === currentPayId);
+      if (!credit) return;
+
+      let finalAmount = amount;
+      if (document.getElementById('addInterest').checked) {
+        const type = document.getElementById('interestType').value;
+        const val = Number(document.getElementById('interestValue').value);
+        if (isNaN(val) || val < 0) return alert('Intérêt invalide.');
+        finalAmount = type === '%' ? round2(amount * (1 + val / 100)) : round2(amount + val);
+      }
+
+      const payment = {
+        amount: finalAmount,
+        date: new Date().toISOString(),
+        note: document.getElementById('addInterest').checked ? 'Avec intérêt' : 'Paiement partiel'
+      };
+
+      credit.payments = credit.payments || [];
+      credit.payments.push(payment);
+
+      saveCredits(credits);
+      closePayModal();
+      alert(`✅ Paiement de ${formatEuro(finalAmount)} enregistré.`);
+    }
+
+    function closePayModal() {
+      document.getElementById('payModal').classList.remove('show');
+    }
+
+    // --- INIT ---
+    document.getElementById('dateVersement').value = todayISO();
+    
+    // Initialiser les canvas après le chargement
+    setTimeout(() => {
+      setupDrawing('debiteurCanvas');
+      if (!mySigData) {
+        initCanvas('myCanvas');
+        setupDrawing('myCanvas');
+      }
+    }, 100);
+    
+    renderTable();
+
+    if (appSettings.lenderName) {
+      document.getElementById('adminName').textContent = appSettings.lenderName;
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeContract(); 
+        closePayModal();
+        document.getElementById('mySigModal').classList.remove('show');
+        document.getElementById('settingsModal').classList.remove('show');
+        closeFullscreenSignature();
+      }
+    });
+
+    function setupMySignature() {
+      initCanvas('myCanvas');
+      setupDrawing('myCanvas');
+      document.getElementById('mySigModal').classList.add('show');
+    }
+
+    // Empêcher le défilement indésirable
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.classList.contains('signature-canvas') || 
+          e.target.classList.contains('signature-fullscreen')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  </script>
+</body>
+</html>

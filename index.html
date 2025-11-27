@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=yes" />
-  <title>Ernesto - Gestion des Crédits</title>
+  <title>Gestion des Crédits</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
@@ -15,15 +15,60 @@
       --danger: #ef4444;
       --muted: rgba(255, 255, 255, 0.6);
     }
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
+
+    /* Mode clair */
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f5f5f7;
+        --card: rgba(255, 255, 255, 0.8);
+        --accent: #007AFF;
+        --accent-dark: #0056CC;
+        --success: #28A745;
+        --danger: #DC3545;
+        --muted: rgba(0, 0, 0, 0.6);
+      }
+      body {
+        background: var(--bg);
+        color: #000;
+      }
+      .module {
+        background: var(--card);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      input, select, textarea {
+        background: rgba(255, 255, 255, 0.7);
+        color: #000;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+      .btn-ghost {
+        background: transparent;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #000;
+      }
+      .muted {
+        color: var(--muted);
+      }
+    }
+
+    * { 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body { 
+      height: 100%; 
+      margin: 0; 
+      padding: 0;
+      overflow-x: hidden;
+    }
     body {
-      font-family: 'Segoe UI', Inter, Roboto, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Arial, sans-serif;
       background: var(--bg);
       color: #fff;
       -webkit-font-smoothing: antialiased;
       padding: 15px;
       font-size: 14px;
+      line-height: 1.4;
     }
     .bubble-bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
     .bubble {
@@ -37,92 +82,295 @@
       90% { opacity: 0.18; }
       100% { transform: translateY(-140vh) scale(1.15); opacity: 0; }
     }
-    .container { max-width: 1400px; margin: 0 auto; }
+    .container { 
+      max-width: 1400px; 
+      margin: 0 auto;
+      min-height: 100vh;
+    }
     header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 15px; gap: 10px; flex-wrap: wrap;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 15px; 
+      gap: 10px; 
+      flex-wrap: wrap;
     }
-    header h1 { margin: 0; font-size: 18px; }
-    .modules { display: grid; grid-template-columns: 1fr; gap: 20px; }
-    @media (min-width: 768px) { .modules { grid-template-columns: 1fr 1fr; } }
-    .module { background: var(--card); padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-    h2 { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
-    label { display: block; font-size: 12px; margin-top: 10px; opacity: 0.95; }
+    header h1 { 
+      margin: 0; 
+      font-size: 18px; 
+      font-weight: 700;
+    }
+    .modules { 
+      display: grid; 
+      grid-template-columns: 1fr; 
+      gap: 20px; 
+    }
+    @media (min-width: 768px) { 
+      .modules { 
+        grid-template-columns: 1fr 1fr; 
+      } 
+    }
+    .module { 
+      background: var(--card); 
+      padding: 15px; 
+      border-radius: 16px; 
+      box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h2 { 
+      margin: 0 0 12px; 
+      font-size: 16px; 
+      font-weight: 700; 
+    }
+    label { 
+      display: block; 
+      font-size: 12px; 
+      margin-top: 10px; 
+      opacity: 0.95; 
+      font-weight: 600;
+    }
     input, select, textarea {
-      width: 100%; padding: 8px 10px; margin-top: 4px;
-      border-radius: 8px; border: none;
-      background: rgba(255,255,255,0.03); color: #fff; font-size: 14px;
+      width: 100%; 
+      padding: 12px; 
+      margin-top: 4px;
+      border-radius: 12px; 
+      border: none;
+      background: rgba(255,255,255,0.08); 
+      color: #fff; 
+      font-size: 16px;
+      font-family: inherit;
+      transition: all 0.2s ease;
     }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .col { flex: 1; min-width: 120px; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      background: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+    }
+    .row { 
+      display: flex; 
+      gap: 8px; 
+      flex-wrap: wrap; 
+    }
+    .col { 
+      flex: 1; 
+      min-width: 120px; 
+    }
     button {
-      padding: 8px 12px; border-radius: 8px; border: none;
-      cursor: pointer; font-weight: 600; font-size: 13px;
+      padding: 12px 16px; 
+      border-radius: 12px; 
+      border: none;
+      cursor: pointer; 
+      font-weight: 600; 
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
     }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.06); color: #fff; }
-    .btn-danger { background: var(--danger); color: white; }
+    button:active {
+      transform: scale(0.98);
+    }
+    .btn-primary { 
+      background: var(--accent); 
+      color: white; 
+    }
+    .btn-primary:active {
+      background: var(--accent-dark);
+    }
+    .btn-ghost { 
+      background: transparent; 
+      border: 1px solid rgba(255,255,255,0.15); 
+      color: #fff; 
+    }
+    .btn-ghost:active {
+      background: rgba(255,255,255,0.1);
+    }
+    .btn-danger { 
+      background: var(--danger); 
+      color: white; 
+    }
     .signature-canvas {
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 12px;
       margin-top: 6px;
-      background: #00000010;
+      background: rgba(255,255,255,0.05);
       touch-action: none;
+      width: 100%;
     }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 10px; 
+      font-size: 12px; 
+    }
     th, td {
-      padding: 8px 6px; text-align: left;
-      border-bottom: 1px dashed rgba(255,255,255,0.03);
+      padding: 10px 8px; 
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
-    th { color: #bbb; font-size: 11px; font-weight: 600; }
+    th { 
+      color: #bbb; 
+      font-size: 11px; 
+      font-weight: 600; 
+    }
     .status {
-      padding: 4px 6px; border-radius: 4px; font-size: 10px;
-      font-weight: 700; display: inline-block;
+      padding: 6px 8px; 
+      border-radius: 8px; 
+      font-size: 10px;
+      font-weight: 700; 
+      display: inline-block;
     }
     .status.ok { background: rgba(22,163,74,0.15); color: var(--success); }
     .status.late { background: rgba(239,68,68,0.15); color: var(--danger); }
     .status.partial { background: rgba(251,191,36,0.15); color: #d97706; }
     .status.paid { background: rgba(255,255,255,0.06); color: #fff; }
     .modal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-      display: none; z-index: 100; align-items: center; justify-content: center;
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8);
+      display: none; 
+      z-index: 1000; 
+      align-items: center; 
+      justify-content: center;
       padding: 10px;
     }
-    .modal.show { display: flex; }
+    .modal.show { 
+      display: flex; 
+    }
     .modal-content {
-      background: #1a1f29; width: 100%; max-width: 800px; border-radius: 12px;
-      padding: 20px; max-height: 90vh; overflow: auto;
+      background: #1a1f29; 
+      width: 100%; 
+      max-width: 800px; 
+      border-radius: 20px;
+      padding: 20px; 
+      max-height: 90vh; 
+      overflow: auto;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
     }
     .modal-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 15px; flex-wrap: wrap; gap: 10px;
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+      margin-bottom: 15px; 
+      flex-wrap: wrap; 
+      gap: 10px;
     }
-    .contract { background: white; color: #000; padding: 20px; border-radius: 10px; font-size: 14px; line-height: 1.5; }
-    .contract h3 { margin-top: 0; color: #1a365d; font-size: 18px; }
-    .signature-box { margin-top: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
-    .signature-box div { width: 100%; min-width: 150px; text-align: center; }
-    @media (min-width: 480px) { .signature-box div { width: 45%; } }
-    .signature-img { height: 50px; border-top: 1px solid #333; padding-top: 6px; }
-    .muted { color: var(--muted); font-size: 12px; }
-    .pay-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 101; align-items: center; justify-content: center; padding: 10px; }
-    .pay-modal.show { display: flex; }
-    .pay-content { background: var(--card); padding: 20px; border-radius: 12px; width: 100%; max-width: 400px; }
-    .logo-preview { max-width: 150px; max-height: 80px; margin: 8px 0; border-radius: 6px; }
-    .contract-page { page-break-after: always; padding: 20px; }
-    .contract-page:last-child { page-break-after: avoid; }
+    .contract { 
+      background: white; 
+      color: #000; 
+      padding: 20px; 
+      border-radius: 16px; 
+      font-size: 16px; 
+      line-height: 1.6; 
+    }
+    .contract h3 { 
+      margin-top: 0; 
+      color: #1a365d; 
+      font-size: 20px; 
+    }
+    .signature-box { 
+      margin-top: 20px; 
+      display: flex; 
+      justify-content: space-between; 
+      flex-wrap: wrap; 
+      gap: 15px; 
+    }
+    .signature-box div { 
+      width: 100%; 
+      min-width: 150px; 
+      text-align: center; 
+    }
+    @media (min-width: 480px) { 
+      .signature-box div { 
+        width: 45%; 
+      } 
+    }
+    .signature-img { 
+      height: 60px; 
+      border-top: 1px solid #333; 
+      padding-top: 8px; 
+    }
+    .muted { 
+      color: var(--muted); 
+      font-size: 12px; 
+    }
+    .pay-modal { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.8); 
+      z-index: 1001; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 10px; 
+    }
+    .pay-modal.show { 
+      display: flex; 
+    }
+    .pay-content { 
+      background: var(--card); 
+      padding: 20px; 
+      border-radius: 20px; 
+      width: 100%; 
+      max-width: 400px; 
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo-preview { 
+      max-width: 150px; 
+      max-height: 80px; 
+      margin: 8px 0; 
+      border-radius: 12px; 
+    }
+    .contract-page { 
+      page-break-after: always; 
+      padding: 20px; 
+    }
+    .contract-page:last-child { 
+      page-break-after: avoid; 
+    }
     
     /* Styles pour mobile */
     @media (max-width: 480px) {
-      body { padding: 10px; }
-      .module { padding: 12px; }
-      header { flex-direction: column; align-items: flex-start; }
-      header h1 { font-size: 16px; }
-      .row { flex-direction: column; }
-      .col { min-width: auto; }
-      button { width: 100%; margin-bottom: 5px; }
-      .signature-canvas { width: 100% !important; height: 80px !important; }
-      table { font-size: 11px; }
-      th, td { padding: 6px 4px; }
+      body { 
+        padding: 12px; 
+        font-size: 15px;
+      }
+      .module { 
+        padding: 12px; 
+      }
+      header { 
+        flex-direction: column; 
+        align-items: flex-start; 
+      }
+      header h1 { 
+        font-size: 17px; 
+      }
+      .row { 
+        flex-direction: column; 
+      }
+      .col { 
+        min-width: auto; 
+      }
+      button { 
+        width: 100%; 
+        margin-bottom: 5px; 
+        padding: 14px;
+      }
+      .signature-canvas { 
+        height: 100px !important; 
+      }
+      table { 
+        font-size: 13px; 
+      }
+      th, td { 
+        padding: 8px 6px; 
+      }
+      input, select, textarea {
+        padding: 14px;
+        font-size: 16px;
+      }
     }
 
     /* Styles pour la signature en plein écran */
@@ -132,18 +380,20 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 1000;
+      z-index: 2000;
       padding: 20px;
     }
-    .signature-modal.show { display: flex; }
+    .signature-modal.show { 
+      display: flex; 
+    }
     .signature-container {
       background: white;
-      border-radius: 10px;
+      border-radius: 20px;
       padding: 20px;
       width: 100%;
       max-width: 500px;
@@ -153,14 +403,43 @@
       width: 100%;
       height: 200px;
       border: 2px solid #333;
-      border-radius: 8px;
+      border-radius: 12px;
       background: white;
       margin: 15px 0;
       touch-action: none;
     }
+
+    /* Sélecteur de thème */
+    .theme-selector {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+    .theme-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+    .theme-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Correction du défilement */
+    .scroll-fix {
+      -webkit-overflow-scrolling: touch;
+      overflow-anchor: none;
+    }
   </style>
 </head>
-<body>
+<body class="scroll-fix">
   <div class="bubble-bg" aria-hidden="true">
     <div class="bubble" style="left:5%; width:140px; height:140px; animation-duration:28s;"></div>
     <div class="bubble" style="left:22%; width:100px; height:100px; animation-duration:24s; animation-delay:2s;"></div>
@@ -169,15 +448,20 @@
     <div class="bubble" style="left:82%; width:90px; height:90px; animation-duration:20s; animation-delay:.5s;"></div>
   </div>
 
+  <!-- Sélecteur de thème -->
+  <div class="theme-selector">
+    <button class="theme-btn" onclick="toggleTheme()">🌓</button>
+  </div>
+
   <div class="container">
     <header>
       <div>
-        <h1>Ernesto — Gestion des Crédits</h1>
-        <p class="muted">Donateur : <strong id="adminName">Vladimir Romero Figueroa Ernesto</strong></p>
+        <h1>Gestion des Crédits</h1>
+        <p class="muted">Prêteur : <strong id="adminName">Vladimir Romero Figueroa Ernesto</strong></p>
       </div>
       <div style="display: flex; gap: 6px; flex-wrap: wrap;">
         <button class="btn-ghost" onclick="openSettings()">⚙️ Paramètres</button>
-        <button class="btn-ghost" onclick="setupMySignature()">🎨 Ma signature</button>
+        <button class="btn-ghost" onclick="setupMySignature()">🎨 Signature</button>
       </div>
     </header>
 
@@ -191,23 +475,23 @@
           <label>Nom *</label>
           <input id="nom" required>
           <label>Téléphone (optionnel)</label>
-          <input id="telephone" type="tel">
+          <input id="telephone" type="tel" inputmode="tel">
           <label>Lieu de signature *</label>
           <input id="lieuSignature" required placeholder="Ville, Pays">
           
           <div class="row">
             <div class="col">
               <label>Montant emprunté (€) *</label>
-              <input id="montant" type="number" step="0.01" min="0.01" required onchange="calculateMonthlyPayment()">
+              <input id="montant" type="number" step="0.01" min="0.01" required onchange="calculateMonthlyPayment()" inputmode="decimal">
             </div>
             <div class="col">
               <label>Intérêt</label>
               <div style="display:flex; gap:4px;">
-                <select id="typeInteret" style="width:40%; padding:8px; border-radius:6px;" onchange="calculateMonthlyPayment()">
+                <select id="typeInteret" style="width:40%; padding:12px; border-radius:10px;" onchange="calculateMonthlyPayment()">
                   <option value="%">%</option>
                   <option value="€">€</option>
                 </select>
-                <input id="interet" type="number" step="0.01" min="0" placeholder="0" onchange="calculateMonthlyPayment()">
+                <input id="interet" type="number" step="0.01" min="0" placeholder="0" onchange="calculateMonthlyPayment()" inputmode="decimal">
               </div>
             </div>
           </div>
@@ -215,11 +499,11 @@
           <div class="row">
             <div class="col">
               <label>Durée du prêt (mois) *</label>
-              <input id="dureeMois" type="number" min="1" required placeholder="Ex: 12" onchange="calculateMonthlyPayment(); calculateDueDate();">
+              <input id="dureeMois" type="number" min="1" required placeholder="Ex: 12" onchange="calculateMonthlyPayment(); calculateDueDate();" inputmode="numeric">
             </div>
             <div class="col">
               <label>Montant mensuel (€) *</label>
-              <input id="montantMensuel" type="number" step="0.01" min="0.01" required placeholder="Ex: 833.33">
+              <input id="montantMensuel" type="number" step="0.01" min="0.01" required placeholder="Ex: 833.33" inputmode="decimal">
             </div>
           </div>
 
@@ -238,7 +522,7 @@
           <label>Signature du débiteur *</label>
           <div style="position: relative;">
             <canvas id="debiteurCanvas" class="signature-canvas" width="400" height="100"></canvas>
-            <button type="button" class="btn-ghost" onclick="openFullscreenSignature('debiteurCanvas')" style="position: absolute; top: 5px; right: 5px; padding: 4px 8px; font-size: 11px;">📱 Plein écran</button>
+            <button type="button" class="btn-ghost" onclick="openFullscreenSignature('debiteurCanvas')" style="position: absolute; top: 5px; right: 5px; padding: 6px 10px; font-size: 12px; background: rgba(0,0,0,0.7);">📱 Plein écran</button>
           </div>
           <div style="display:flex; gap:6px; margin-top:6px; align-items: center;">
             <button type="button" class="btn-ghost" onclick="clearCanvas('debiteurCanvas')">🗑️ Effacer</button>
@@ -294,18 +578,18 @@
       <h3>💰 Enregistrer un paiement</h3>
       <p id="payInfo"></p>
       <label>Montant reçu (€) *</label>
-      <input id="amountReceived" type="number" step="0.01" min="0.01" placeholder="Ex: 10">
+      <input id="amountReceived" type="number" step="0.01" min="0.01" placeholder="Ex: 10" inputmode="decimal">
 
       <div style="margin-top:10px;">
         <label>
           <input type="checkbox" id="addInterest"> Ajouter un intérêt (optionnel)
         </label>
         <div id="interestFields" style="display:none; margin-top:6px; display:flex; gap:6px;">
-          <select id="interestType" style="width:35%; padding:6px; border-radius:4px;">
+          <select id="interestType" style="width:35%; padding:10px; border-radius:8px;">
             <option value="%">%</option>
             <option value="€">€</option>
           </select>
-          <input id="interestValue" type="number" step="0.01" min="0" placeholder="Valeur">
+          <input id="interestValue" type="number" step="0.01" min="0" placeholder="Valeur" inputmode="decimal">
         </div>
       </div>
 
@@ -322,7 +606,7 @@
       <h3>Signature - Plein écran</h3>
       <p>Signez avec votre doigt ou stylet</p>
       <canvas id="fullscreenCanvas" class="signature-fullscreen"></canvas>
-      <div style="margin-top:15px; display:flex; gap:8px; justify-content: center;">
+      <div style="margin-top:15px; display:flex; gap:8px; justify-content: center; flex-wrap: wrap;">
         <button class="btn-ghost" onclick="clearFullscreenCanvas()">🗑️ Effacer</button>
         <button class="btn-primary" onclick="saveFullscreenSignature()">✅ Valider</button>
         <button class="btn-ghost" onclick="closeFullscreenSignature()">❌ Annuler</button>
@@ -333,9 +617,9 @@
   <!-- CACHÉ : CANVAS POUR TA SIGNATURE -->
   <div id="mySigModal" class="modal">
     <div class="modal-content">
-      <h3>Signature du prêteur (Ernesto)</h3>
+      <h3>Signature du prêteur</h3>
       <p>Dessinez une fois. Utilisée dans tous les contrats.</p>
-      <canvas id="myCanvas" width="400" height="100" style="border:1px solid #555; border-radius:6px; background:#00000010;"></canvas>
+      <canvas id="myCanvas" width="400" height="100" style="border:1px solid #555; border-radius:12px; background:#00000010;"></canvas>
       <div style="margin-top:8px; display:flex; gap:6px;">
         <button class="btn-ghost" onclick="clearCanvas('myCanvas')">🗑️ Effacer</button>
         <button class="btn-primary" onclick="saveMySignature()">✅ Sauvegarder</button>
@@ -383,7 +667,7 @@
         <textarea id="lenderAddress" rows="2" placeholder="Adresse complète..."></textarea>
         
         <label>Téléphone</label>
-        <input type="tel" id="lenderPhone" placeholder="Numéro de téléphone...">
+        <input type="tel" id="lenderPhone" placeholder="Numéro de téléphone..." inputmode="tel">
       </div>
 
       <div style="display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap;">
@@ -393,8 +677,6 @@
     </div>
   </div>
 
-  <input id="jsonFile" type="file" accept="application/json" style="display:none" />
-
   <script>
     const DONATEUR = "Vladimir Romero Figueroa Ernesto";
     function uid() { return 'id-' + Math.random().toString(36).slice(2, 10); }
@@ -403,9 +685,11 @@
     function escapeHtml(s) { return s ? String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '<', '>': '>', '"': '&quot;', "'": '&#39;' }[c])) : ''; }
     function formatEuro(x) { return Number(x || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }); }
 
-    const KEY_CREDITS = 'credits_v6';
+    const KEY_CREDITS = 'credits_v7';
     const KEY_MY_SIG = 'mySignatureData';
     const KEY_SETTINGS = 'appSettings';
+    const KEY_THEME = 'appTheme';
+    
     let debiteurSigned = false;
     let mySigData = localStorage.getItem(KEY_MY_SIG);
     let currentPayId = null;
@@ -413,13 +697,69 @@
     let currentSignatureCanvas = null;
     let appSettings = JSON.parse(localStorage.getItem(KEY_SETTINGS)) || {};
 
-    function loadCredits() { try { return JSON.parse(localStorage.getItem(KEY_CREDITS)) || []; } catch (e) { return []; } }
-    function saveCredits(arr) { localStorage.setItem(KEY_CREDITS, JSON.stringify(arr)); renderTable(); }
+    // Gestion du thème
+    function toggleTheme() {
+      const currentTheme = localStorage.getItem(KEY_THEME) || 'auto';
+      let newTheme;
+      
+      if (currentTheme === 'auto') {
+        newTheme = 'dark';
+      } else if (currentTheme === 'dark') {
+        newTheme = 'light';
+      } else {
+        newTheme = 'auto';
+      }
+      
+      localStorage.setItem(KEY_THEME, newTheme);
+      applyTheme(newTheme);
+      alert(`Thème ${newTheme === 'auto' ? 'automatique' : newTheme === 'dark' ? 'sombre' : 'clair'} activé`);
+    }
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.style.setProperty('--bg', '#0f1217');
+        document.documentElement.style.setProperty('--card', 'rgba(255, 255, 255, 0.04)');
+        document.documentElement.style.setProperty('--muted', 'rgba(255, 255, 255, 0.6)');
+      } else if (theme === 'light') {
+        document.documentElement.style.setProperty('--bg', '#f5f5f7');
+        document.documentElement.style.setProperty('--card', 'rgba(255, 255, 255, 0.8)');
+        document.documentElement.style.setProperty('--muted', 'rgba(0, 0, 0, 0.6)');
+      }
+    }
+
+    // Appliquer le thème au chargement
+    const savedTheme = localStorage.getItem(KEY_THEME) || 'auto';
+    if (savedTheme !== 'auto') {
+      applyTheme(savedTheme);
+    }
+
+    function loadCredits() { 
+      try { 
+        return JSON.parse(localStorage.getItem(KEY_CREDITS)) || []; 
+      } catch (e) { 
+        return []; 
+      } 
+    }
+    
+    function saveCredits(arr) { 
+      localStorage.setItem(KEY_CREDITS, JSON.stringify(arr)); 
+      renderTable(); 
+    }
 
     // --- CANVAS AMÉLIORÉ ---
     function initCanvas(id) {
       const canvas = document.getElementById(id);
       const ctx = canvas.getContext('2d');
+      
+      // Redimensionner le canvas pour l'affichage
+      const displayWidth = canvas.offsetWidth;
+      const displayHeight = canvas.offsetHeight;
+      
+      if (canvas.width !== displayWidth || canvas.height !== displayHeight) {
+        canvas.width = displayWidth;
+        canvas.height = displayHeight;
+      }
+      
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.lineWidth = 3;
@@ -445,7 +785,7 @@
         if (e.type.includes('touch')) {
           clientX = e.touches[0].clientX;
           clientY = e.touches[0].clientY;
-          e.preventDefault(); // Empêche le défilement pendant la signature
+          e.preventDefault();
         } else {
           clientX = e.clientX;
           clientY = e.clientY;
@@ -475,8 +815,6 @@
         if (!isDown) return;
         const pos = getPos(e);
         
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
         
@@ -486,16 +824,24 @@
       
       const stop = () => {
         isDown = false;
-        ctx.beginPath(); // Réinitialise le chemin pour le prochain trait
+        ctx.beginPath();
       };
 
-      // Événements souris
+      // Réinitialiser les événements
+      canvas.removeEventListener('mousedown', start);
+      canvas.removeEventListener('mousemove', draw);
+      canvas.removeEventListener('mouseup', stop);
+      canvas.removeEventListener('mouseout', stop);
+      canvas.removeEventListener('touchstart', start);
+      canvas.removeEventListener('touchmove', draw);
+      canvas.removeEventListener('touchend', stop);
+      canvas.removeEventListener('touchcancel', stop);
+
+      // Appliquer les événements
       canvas.addEventListener('mousedown', start);
       canvas.addEventListener('mousemove', draw);
       canvas.addEventListener('mouseup', stop);
       canvas.addEventListener('mouseout', stop);
-      
-      // Événements tactiles avec passive: false pour éviter le défilement
       canvas.addEventListener('touchstart', start, { passive: false });
       canvas.addEventListener('touchmove', draw, { passive: false });
       canvas.addEventListener('touchend', stop, { passive: false });
@@ -505,14 +851,26 @@
     // --- SIGNATURE PLEIN ÉCRAN ---
     function openFullscreenSignature(canvasId) {
       currentSignatureCanvas = canvasId;
-      const { canvas: originalCanvas } = initCanvas(canvasId);
+      const originalCanvas = document.getElementById(canvasId);
       const fullscreenCanvas = document.getElementById('fullscreenCanvas');
       
-      // Copier le contenu existant
-      const ctx = fullscreenCanvas.getContext('2d');
-      ctx.drawImage(originalCanvas, 0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+      // Redimensionner le canvas plein écran
+      fullscreenCanvas.width = fullscreenCanvas.offsetWidth;
+      fullscreenCanvas.height = fullscreenCanvas.offsetHeight;
       
-      // Configurer le dessin en plein écran
+      const ctx = fullscreenCanvas.getContext('2d');
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      // Copier le contenu existant si disponible
+      if (originalCanvas.width > 0) {
+        ctx.drawImage(originalCanvas, 0, 0, fullscreenCanvas.width, fullscreenCanvas.height);
+      }
+      
       setupFullscreenDrawing();
       document.getElementById('fullscreenSigModal').classList.add('show');
     }
@@ -523,10 +881,6 @@
       let isDown = false;
       let lastX = 0;
       let lastY = 0;
-
-      // Redimensionner le canvas pour qu'il prenne toute la largeur
-      canvas.width = canvas.offsetWidth;
-      canvas.height = 200;
 
       const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -560,8 +914,6 @@
         if (!isDown) return;
         const pos = getPos(e);
         
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
         ctx.lineTo(pos.x, pos.y);
         ctx.stroke();
         
@@ -574,7 +926,7 @@
         ctx.beginPath();
       };
 
-      // Réinitialiser les événements
+      // Réinitialiser et réappliquer les événements
       canvas.removeEventListener('mousedown', start);
       canvas.removeEventListener('mousemove', draw);
       canvas.removeEventListener('mouseup', stop);
@@ -584,7 +936,6 @@
       canvas.removeEventListener('touchend', stop);
       canvas.removeEventListener('touchcancel', stop);
 
-      // Réappliquer les événements
       canvas.addEventListener('mousedown', start);
       canvas.addEventListener('mousemove', draw);
       canvas.addEventListener('mouseup', stop);
@@ -601,7 +952,7 @@
       ctx.fillStyle = 'white';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = '#000';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
     }
 
     function saveFullscreenSignature() {
@@ -609,7 +960,10 @@
       const originalCanvas = document.getElementById(currentSignatureCanvas);
       const originalCtx = originalCanvas.getContext('2d');
       
-      // Copier la signature vers le canvas original
+      // Redimensionner et copier la signature
+      originalCanvas.width = originalCanvas.offsetWidth;
+      originalCanvas.height = originalCanvas.offsetHeight;
+      
       originalCtx.drawImage(fullscreenCanvas, 0, 0, originalCanvas.width, originalCanvas.height);
       
       if (currentSignatureCanvas === 'debiteurCanvas') {
@@ -866,7 +1220,7 @@
         <!-- PAGE 1 -->
         <div class="contract-page">
           ${appSettings.logoData ? `<div style="text-align: center; margin-bottom: 15px;"><img src="${appSettings.logoData}" style="max-width: 180px; max-height: 70px;"></div>` : ''}
-          <h3 style="color: #1a365d; margin-top: 0; text-align: center; font-size: 20px;">CONTRAT DE PRÊT ENTRE PARTICULIERS</h3>
+          <h3 style="color: #1a365d; margin-top: 0; text-align: center; font-size: 22px;">CONTRAT DE PRÊT ENTRE PARTICULIERS</h3>
           
           <div style="margin: 20px 0;">
             <p style="font-size: 16px; margin: 12px 0;"><strong>Prêteur :</strong> ${lenderName}</p>
@@ -888,19 +1242,17 @@
             <p style="font-size: 15px; margin: 10px 0;"><strong>Premier paiement :</strong> ${firstPaymentStr}</p>
             <p style="font-size: 15px; margin: 10px 0;"><strong>Lieu de signature :</strong> ${escapeHtml(credit.lieuSignature)}</p>
           </div>
-
-          <div style="margin: 20px 0;">
-            <h4 style="color: #1a365d; font-size: 18px;">CONDITIONS GÉNÉRALES</h4>
-            <p style="font-size: 14px; margin: 8px 0;">1. L'emprunteur s'engage à rembourser le prêt selon l'échéancier convenu.</p>
-            <p style="font-size: 14px; margin: 8px 0;">2. Tout retard de paiement supérieur à 15 jours pourra entraîner des pénalités.</p>
-            <p style="font-size: 14px; margin: 8px 0;">3. Le prêteur certifie que les fonds proviennent de ressources légales.</p>
-            <p style="font-size: 14px; margin: 8px 0;">4. Les deux parties s'engagent à la confidentialité des informations.</p>
-          </div>
         </div>
 
         <!-- PAGE 2 -->
         <div class="contract-page">
-          <h4 style="color: #1a365d; font-size: 18px; margin-top: 0;">ÉCHÉANCIER DE REMBOURSEMENT</h4>
+          <h4 style="color: #1a365d; font-size: 18px; margin-top: 0;">CONDITIONS GÉNÉRALES</h4>
+          <p style="font-size: 14px; margin: 8px 0;">1. L'emprunteur s'engage à rembourser le prêt selon l'échéancier convenu.</p>
+          <p style="font-size: 14px; margin: 8px 0;">2. Tout retard de paiement supérieur à 15 jours pourra entraîner des pénalités.</p>
+          <p style="font-size: 14px; margin: 8px 0;">3. Le prêteur certifie que les fonds proviennent de ressources légales.</p>
+          <p style="font-size: 14px; margin: 8px 0;">4. Les deux parties s'engagent à la confidentialité des informations.</p>
+
+          <h4 style="color: #1a365d; font-size: 18px; margin-top: 25px;">ÉCHÉANCIER DE REMBOURSEMENT</h4>
           <p style="font-size: 15px; margin: 12px 0;">
             L'emprunteur s'engage à effectuer <strong>${credit.dureeMois} paiements mensuels</strong> 
             de <strong>${formatEuro(credit.montantMensuel)}</strong> chacun, le premier versement 
@@ -913,11 +1265,6 @@
             <p style="font-size: 15px; margin: 6px 0;"><strong>Nombre de mensualités :</strong> ${credit.dureeMois}</p>
             <p style="font-size: 15px; margin: 6px 0;"><strong>Date finale :</strong> ${credit.dateLimite}</p>
           </div>
-
-          <h4 style="color: #1a365d; font-size: 18px; margin-top: 25px;">DISPOSITIONS FINALES</h4>
-          <p style="font-size: 14px; margin: 10px 0;">En cas de litige, les parties s'engagent à rechercher une solution amiable avant toute action en justice.</p>
-          <p style="font-size: 14px; margin: 10px 0;">Fait à ${escapeHtml(credit.lieuSignature)}, le ${credit.dateVersement}</p>
-          <p style="font-size: 14px; margin: 10px 0;">En deux exemplaires originaux.</p>
 
           <div style="display: flex; justify-content: space-between; margin-top: 40px; gap: 15px; flex-wrap: wrap;">
             <div style="width: 100%; min-width: 150px; text-align: center;">
@@ -987,7 +1334,8 @@
       const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
       const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
       
-      const fileName = `credit_${credit.prenom}_${credit.nom}_${dateStr}_${timeStr}.pdf`;
+      // Nom du fichier en minuscules
+      const fileName = `credit_${credit.prenom.toLowerCase()}_${credit.nom.toLowerCase()}_${dateStr}_${timeStr}.pdf`;
       
       const element = document.getElementById('contractContent');
       const opt = {
@@ -1063,7 +1411,16 @@
 
     // --- INIT ---
     document.getElementById('dateVersement').value = todayISO();
-    setupDrawing('debiteurCanvas');
+    
+    // Initialiser les canvas après le chargement
+    setTimeout(() => {
+      setupDrawing('debiteurCanvas');
+      if (!mySigData) {
+        initCanvas('myCanvas');
+        setupDrawing('myCanvas');
+      }
+    }, 100);
+    
     renderTable();
 
     if (appSettings.lenderName) {
@@ -1081,14 +1438,18 @@
     });
 
     function setupMySignature() {
-      if (!mySigData) {
-        initCanvas('myCanvas');
-        setupDrawing('myCanvas');
-        document.getElementById('mySigModal').classList.add('show');
-      } else {
-        alert('Votre signature est déjà enregistrée.');
-      }
+      initCanvas('myCanvas');
+      setupDrawing('myCanvas');
+      document.getElementById('mySigModal').classList.add('show');
     }
+
+    // Empêcher le défilement indésirable
+    document.addEventListener('touchmove', function(e) {
+      if (e.target.classList.contains('signature-canvas') || 
+          e.target.classList.contains('signature-fullscreen')) {
+        e.preventDefault();
+      }
+    }, { passive: false });
   </script>
 </body>
 </html>
